@@ -9,9 +9,10 @@ const app = express()
 const port = portal
 
 app.use(express.json())
+app.use(cors())
 app.use(userRouter)
 app.use(taskRouter)
-app.use(cors)
+
 
 app.get('/', (req, res) => {
     res.send('<h1>Selamat datang di Heroku API</h1>')

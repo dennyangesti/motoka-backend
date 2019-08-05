@@ -43,7 +43,7 @@ const upstore = multer(
 )
 
 // CREATE ONE USER
-router.post('/users', (req, res) => {
+router.post(`/users`, (req, res) => {
 
     // tanda tanya akan di ganti oleh variabel data
     const sql = `INSERT INTO users SET ?`
@@ -84,6 +84,27 @@ router.post('/users', (req, res) => {
 
             res.send(result2)
         })
+    })
+})
+
+// LOGIN USER
+router.post('/users/login', (req, res) => {
+    const sql = `SELECT * FROM users WHERE username = ?`
+    const data = req.body.username
+
+    conn.query(sql, data, async (err, result) => {
+        if (err) return res.send(err)
+
+        const user = result[0]
+
+        if (!user) return res.send('Username not found')
+
+        const match = await bcrypt.compare(req.body.password, result[0].password)
+        if (!match) {
+            return res.send(`Password Incorrect`)
+        }
+
+        res.send(user)
     })
 })
 
@@ -203,8 +224,9 @@ router.patch('/users/profile/:uname', (req, res) => {
     })
 })
 
+
 // READ ALL USERS
-router.get('/allusers', (req, res) => {
+router.get('/users', (req, res) => {
     const sql = `SELECT * FROM users`
 
     conn.query(sql, (err, result) => {
