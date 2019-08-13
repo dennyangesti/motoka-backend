@@ -59,11 +59,12 @@ const upstore = multer(
 // ------------------------------------
 
 // USER REGISTER START
-router.post(`/users`, (req, res) => {
+router.post(`/register`, (req, res) => {
+    const data = req.body
     const sql = `SELECT username FROM users WHERE username = '${data.username}'`
     const sql2 = `SELECT email FROM users WHERE email = '${data.email}'`
     const sql3 = `INSERT INTO users SET = ?`
-    const data = req.body
+
 
     if (data.first_name == '' || data.username == '' || data.email == '' || data.password == '' || data.gender == '') {
         return res.send(`Can't be blank, please fill all the required forms `)
@@ -80,21 +81,21 @@ router.post(`/users`, (req, res) => {
         data.last_name = l_first_letter.concat(l_name)
 
         // Spasi di akhir dan awal akan di hapus
-        if (data.username.include(' ')) {
+        if (data.username.includes(' ')) {
             return res.send('Invalid, contain spaces')
         }
         data.username = data.username.trim()
 
         // Email validator
-        if (!validator.isEmail(data.email)) {
+        if (!isEmail(data.email)) {
             return res.send(`Invalid, wrong email format`)
         }
 
         // Hash Password
         if (data.password.length < 6) {
-            return res.send(`Invalid, password must be atleast 6 words`)
+            return res.send(data.password)
         } else {
-            data.password = bcrypt.hashSync(data.password, 8)
+            data.password = bcrypt.hashSync(data.password, 6)
         }
 
         // Check Username
