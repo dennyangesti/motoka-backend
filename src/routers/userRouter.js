@@ -7,8 +7,7 @@ const fs = require('fs')
 const multer = require('multer')
 const mailVerify = require('../email/nodemailer')
 
-const portal = require('../config/port')
-const port = portal
+
 
 // ------------------------------------
 // ------------IMAGE CONFIG------------
@@ -54,220 +53,12 @@ const upstore = multer(
 
 
 // ------------------------------------
-// --------------USER------------------
-// --------------START-----------------
-// ------------------------------------
-
-// USER REGISTER START
-router.post(`/register`, (req, res) => {
-    const data = req.body
-    const sql = `SELECT username FROM users WHERE username = '${data.username}'`
-    const sql2 = `SELECT email FROM users WHERE email = '${data.email}'`
-    const sql3 = `INSERT INTO users SET = ?`
-
-
-    if (data.first_name == '' || data.username == '' || data.email == '' || data.password == '' || data.gender == '') {
-        return res.send(`Can't be blank, please fill all the required forms `)
-
-    } else {
-        // Huruf Besar di first name
-        const f_first_letter = data.first_name.charAt(0).toUpperCase()
-        const f_name = data.first_name.slice(1)
-        data.first_name = f_first_letter.concat(f_name)
-
-        // Hurus Besar di last name
-        const l_first_letter = data.last_name.charAt(0).toUpperCase()
-        const l_name = data.last_name.slice(1)
-        data.last_name = l_first_letter.concat(l_name)
-
-        // Spasi di akhir dan awal akan di hapus
-        if (data.username.includes(' ')) {
-            return res.send('Invalid, contain spaces')
-        }
-        data.username = data.username.trim()
-
-        // Email validator
-        if (!isEmail(data.email)) {
-            return res.send(`Invalid, wrong email format`)
-        }
-
-        // Hash Password
-        if (data.password.length < 6) {
-            return res.send(data.password)
-        } else {
-            data.password = bcrypt.hashSync(data.password, 6)
-        }
-
-        // Check Username
-        conn.query(sql, (err, result) => {
-            if (err) return res.send(result)
-            if (!(result.length) == 0) {
-                res.send(`Invalid, username already taken`)
-            } else {
-
-                // Check Email
-                conn.query(sql2, (err, result2) => {
-                    if (err) return res.send(err)
-                    if (!(result2.length) == 0) {
-                        res.send(`Invalid, email already taken`)
-                    } else {
-
-                        // Input Database
-                        conn.query(sql3, data, (err, result3) => {
-                            if (err) return res.send(err)
-
-                            // mailVerify(data)
-                            res.send(result3)
-                        })
-                    }
-                })
-            }
-        })
-    }
-})
-// USER REGISTER END
-
-// USER LOGIN START
-router.post('/users/login', (req, res) => {
-    const sql = `SELECT * FROM users WHERE username = '${data.username}'`
-    const data = req.body
-
-    if (data.username == '' || data.password == '') {
-        return res.send(`Invalid, please insert username and password`)
-    } else {
-        conn.query(sql, (err, result) => {
-            if (err) return res.send(err)
-            if (!result) return res.send(`Invalid, cant found data, please register`)
-            if (result.length < 1) {
-                return res.send(`Invalid, username or password are incorrect`)
-            } else {
-                bcrypt.compare(data.password, result[0].password)
-                    .then(val => {
-                        if (val === false) return res.send(`Invalid, username or password are incorrect`)
-                        res.send(result[0])
-                    })
-            }
-        })
-    }
-})
-// USER LOGIN END
-
-// EMAIL VERIFY START
-router.get(`/verify/:id`, (req, res) => {
-    const sql = `UPDATE users SET verified = true WHERE id = '${req.params.id}'`
-
-    conn.query(sql, (err, result) => {
-        if (err) return res.send(err)
-        res.send(`Success, user are verified!`)
-    })
-})
-// EMAIL VERIFY END
-
-// USER UPDATE PROFILE START
-router.patch(`/updateprofile/:id`, (req, res) => {
-    const sql = `UPDATE users SET ? WHERE id = ?`
-    const data = [req.body, req.params.id]
-
-    conn.query(sql, data, (err, result) => {
-        if (err) return res.send(err)
-
-        const sql2 = `SELECT * FROM users WHERE id = ${req.params.id}`
-
-        conn.query(sql2, (err, result2) => {
-            if (err) return res.send(err)
-
-            res.send(result2[0])
-        })
-    })
-})
-// USER UPDATE PROFILE END
-
-
-// READ PROFILE
-router.get('/users/profile/:username', (req, res) => {
-    const sql = `SELECT username, name, email, avatar
-                FROM users WHERE username = ?`
-    const data = req.params.username
-
-    conn.query(sql, data, (err, result) => {
-        // Jika ada error dalam menjalankan query, akan dikirim errornya
-        if (err) return res.send(err)
-
-        const user = result[0]
-
-        // jika user tidak di temukan
-        if (!user) return res.send('User not found')
-
-        res.send({
-            username: user.username,
-            name: user.name,
-            email: user.email,
-            avatar: `https://dennyexpressmysql.herokuapp.com/users/avatar/${user.avatar}`
-        })
-    })
-})
-
-// UPDATE PROFILE
-router.patch('/users/profile/:uname', (req, res) => {
-    const sql = `UPDATE users SET ? WHERE username = ?`
-    const sql2 = `SELECT username, name ,email 
-                    FROM users WHERE username = '${req.params.uname}'`
-    const data = [req.body, req.params.uname]
-
-    // UPDATE (Ubah data user di database)
-    conn.query(sql, data, (err, result) => {
-        if (err) return res.send(err)
-
-        // SELECT (Ambil user dari database)
-        conn.query(sql2, (err, result) => {
-            // result SELECT adalah array
-            if (err) return res.send(err)
-
-            // Kirim usernya dalam bentuk object
-            res.send(result[0])
-        })
-    })
-})
-
-
-// READ ALL USERS
-router.get('/users', (req, res) => {
-    const sql = `SELECT * FROM users`
-
-    conn.query(sql, (err, result) => {
-        if (err) return res.send(err)
-
-        res.send(result)
-    })
-})
-
-// VERIFY USER
-router.get('/verify', (req, res) => {
-    const sql = `UPDATE users SET verified = true 
-                WHERE username = '${req.query.uname}'`
-
-    conn.query(sql, (err, result) => {
-        if (err) return res.send(err)
-
-        res.send('<h1>Verifikasi berhasil</h1>')
-    })
-})
-
-
-// ------------------------------------
-// --------------USER------------------
-// ---------------END------------------
-// ------------------------------------
-
-
-
-// ------------------------------------
 // -------------AVATAR-----------------
 // --------------START-----------------
 // ------------------------------------
 
 // UPLOAD AVATAR START
-router.post('/users/avatar', upstore.single('apatar'), (req, res) => {
+router.post('/avatar', upstore.single('avatar'), (req, res) => {
     const sql = `SELECT * FROM users WHERE username = ?`
     const sql2 = `UPDATE users SET avatar = '${req.file.filename}'
                     WHERE username = '${req.body.uname}'`
@@ -370,5 +161,147 @@ router.delete('/users/avatar', (req, res) => {
 // -------------AVATAR-----------------
 // --------------END-------------------
 // ------------------------------------
+
+// ------------------------------------
+// --------------USER------------------
+// --------------START-----------------
+// ------------------------------------
+
+// USER REGISTER START
+router.post(`/register`, (req, res) => {
+    const sql = `SELECT * FROM users`
+    const sql2 = `INSERT INTO users SET ?`
+    const data = req.body
+
+    if (!isEmail(data.email)) {
+        return res.send(`Email is invalid`)
+    }
+
+    if (data.password.length < 6) {
+        return res.send(`Invalid, Password minimal has 6 characters`)
+    }
+
+    data.password = bcrypt.hashSync(data.password, 8)
+
+    conn.query(sql, data, (err, result) => {
+        if (err) return res.send(err)
+
+        // Check Username already taken
+        let userTaken = result.filter(user => {
+            return user.username === data.username
+        })
+
+        if (userTaken.length === 1) {
+            return res.send(`Username already registered, please use different username`)
+        }
+
+        // Check email already taken
+        let emailTaken = result.filter(user => {
+            return user.email === data.email
+        })
+
+        if (emailTaken.length === 1) {
+            return res.send(`Email already registered, please use different email`)
+        }
+
+        conn.query(sql2, data, (err, results) => {
+            if (err) return res.send(err)
+
+            res.send(results)
+        })
+    })
+})
+// USER REGISTER END
+
+// USER LOGIN START
+router.post('/login', (req, res) => {
+    const sql = `SELECT * FROM users WHERE username = ?`
+    const data = req.body.username
+
+    conn.query(sql, data, async (err, result) => {
+        if (err) return res.send(err)
+
+        const user = result[0]
+
+        if (!user) return res.send(`User not found`)
+
+        const userFound = await bcrypt.compare(req.body.password, user.password)
+
+        if (userFound === false) return res.send(`Incorrect Password, try again.`)
+        res.send(user)
+    })
+})
+// USER LOGIN END
+
+// VERIFY USER START
+router.get(`verify`, (req, res) => {
+    const sql = `UPDATE users SET verified = true WHERE username = ?`
+    const data = req.query.username
+
+    conn.query(sql, data, (err, result) => {
+        if (err) return res.send(err)
+
+        res.send(`Verification success`)
+    })
+})
+// VERIFY USER END
+
+// READ USER START
+router.get(`/profile/:username`, (req, res) => {
+    const sql = `SELECT * FROM users WHERE username = ?`
+    const data = req.params.username
+
+    conn.query(sql, data, (err, result) => {
+        if (err) return res.send(err)
+
+        const user = result[0]
+
+        if (!user) return res.send(`User not found`)
+
+        res.send(
+            {
+                username: user.username,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                email: user.email,
+                phone_number: user.phone_number,
+                avatar: `localhost:2019/users/avatar/${user.avatar}`
+            }
+        )
+    })
+})
+// READ USER END
+
+// UPDATE USER START
+router.patch(`/profile/:username`, (req, res) => {
+
+    if (req.body.password) {
+        req.body.password = bcrypt.hashSync(req.body.password, 8)
+    }
+
+    const sql = `UPDATE users SET ? WHERE username = ?`
+    const data = [req.body, req.params.username]
+
+    const sql2 = `SELECT first_name, last_name, username, email, phone_number, password, verified FROM users WHERE username = ?`
+    const data2 = req.params.username
+
+    conn.query(sql, data, (err, result) => {
+        if (err) return res.send(err)
+
+        conn.query(sql2, data2, (err, result2) => {
+            if (err) return res.send(err)
+
+            const user = result2[0]
+            res.send(user)
+        })
+    })
+})
+// UPDATE USER END
+
+// ------------------------------------
+// --------------USER------------------
+// ---------------END------------------
+// ------------------------------------
+
 
 module.exports = router

@@ -15,20 +15,26 @@ const transporter = nodemailer.createTransport(
 )
 
 const mailVerify = (user) => {
-   var { name, username, email } = user
+   var { id, username, email } = user
 
    const mail = {
-      from: 'Alvin Rochafi <alvinrochafi@gmail.com>',
+      from: 'Motoka <dennyangesti@gmail.com>',
       to: email,
-      subject: 'Hello from the other side',
-      html: `<h1>HELLO ${name}, ITS MEH</h1>
-        <a href='http://localhost:2019/verify?uname=${username}' >Klik untuk verifikasi</a>`
+      subject: '[MOTOKA] Please verify your email adress',
+      html: `
+        <p>Almost done, <b>@${username}</b>! To complete your registration, we just need to verify your email address:</p>
+        <h3>${email}</h3>
+        <br>
+        <b><a href="http://localhost:2019/verify/${id}"> Verify Email </a></b>
+        <br>
+        <br>
+        <p>After verified, you can login and see our products</p>`
    }
 
    transporter.sendMail(mail, (err, result) => {
       if (err) return console.log(err.message)
-
-      console.log('Alhamdulillah ya berhasil')
+      console.log(result)
+      console.log('Email sent!')
    })
 }
 

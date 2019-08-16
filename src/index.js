@@ -4,6 +4,7 @@ const cors = require('cors')
 
 const userRouter = require('./routers/userRouter')
 const adminRouter = require('./routers/adminRouter')
+const productRouter = require('./routers/productRouter')
 
 const app = express()
 const port = portal
@@ -12,6 +13,7 @@ app.use(express.json())
 app.use(cors())
 app.use(userRouter)
 app.use(adminRouter)
+app.use(productRouter)
 
 
 app.get('/', (req, res) => {
@@ -20,5 +22,4 @@ app.get('/', (req, res) => {
 
 app.listen(port, () => {
     console.log('Berhasil Running di ' + port);
-
 })

@@ -1,32 +1,73 @@
 const conn = require('../connection/index')
 const router = require('express').Router()
+const isEmail = require('validator/lib/isEmail')
+const bcrypt = require('bcrypt')
 
-// ADMIN LOGIN START
-router.post(`/admin/login`, (req, res) => {
-   const sql = `SELECT * FROM admin WHERE
-                username = '${req.body.username}' AND
-                password = '${req.body.password}'`
+// ADMIN REGISTER START
+router.post(`/registeradmin`, (req, res) => {
+   const sql = `SELECT * FROM admin`
+   const sql2 = `INSERT INTO admin SET ?`
+   const data = req.body
 
-   conn.query(sql, (err, result) => {
+   if (!isEmail(data.email)) {
+      return res.send(`Email is invalid`)
+   }
+
+   if (data.password.length < 6) {
+      return res.send(`Invalid, Password minimal has 6 characters`)
+   }
+
+   data.password = bcrypt.hashSync(data.password, 8)
+
+   conn.query(sql, data, (err, result) => {
       if (err) return res.send(err)
 
-      res.send(result[0])
+      // Check Username already taken
+      let adminTaken = result.filter(admin => {
+         return admin.username === data.username
+      })
+
+      if (adminTaken.length === 1) {
+         return res.send(`Username already registered, please use different username`)
+      }
+
+      // Check email already taken
+      let emailTaken = result.filter(admin => {
+         return admin.email === data.email
+      })
+
+      if (emailTaken.length === 1) {
+         return res.send(`Email already registered, please use different email`)
+      }
+
+      conn.query(sql2, data, (err, results) => {
+         if (err) return res.send(err)
+
+         res.send(results)
+      })
+   })
+})
+// ADMIN REGISTER END
+
+// ADMIN LOGIN START
+router.post('/login/admin', (req, res) => {
+   const sql = `SELECT * FROM admin WHERE username = ?`
+   const data = req.body.username
+
+   conn.query(sql, data, async (err, result) => {
+      if (err) return res.send(err)
+
+      const admin = result[0]
+
+      if (!admin) return res.send(`Admin not found`)
+
+      const adminFound = await bcrypt.compare(req.body.password, admin.password)
+
+      if (adminFound === false) return res.send(`Incorrect Password, try again.`)
+      res.send(admin)
    })
 })
 // ADMIN LOGIN END
-
-// ADD ADMIN START
-router.post(`/addadmin`, (req, res) => {
-   const sql = `INSERT INTO admin SET = ?`
-   const data = req.body
-
-   conn.query(sql, data, (err, result) => {
-      if (err) res.send(err)
-
-      res.send(result)
-   })
-})
-// ADD ADMIN END
 
 // READ ADMIN START
 router.get(`/admin`, (req, res) => {
