@@ -58,7 +58,7 @@ const upstore = multer(
 // ------------------------------------
 
 // UPLOAD AVATAR START
-router.post('/avatar', upstore.single('avatar'), (req, res) => {
+router.post('/avatar', upstore.single('image'), (req, res) => {
     const sql = `SELECT * FROM users WHERE username = ?`
     const sql2 = `UPDATE users SET avatar = '${req.file.filename}'
                     WHERE username = '${req.body.uname}'`
@@ -84,7 +84,7 @@ router.post('/avatar', upstore.single('avatar'), (req, res) => {
 // UPLOAD AVATAR END
 
 // UPDATE AVATAR START
-router.patch(`/updateavatar/:id`, upstore.single(`apatar`), (req, res) => {
+router.patch(`/updateavatar/:id`, upstore.single(`image`), (req, res) => {
     const sql = `SELECT avatar FROM users WHERE id = ${req.params.id}`
     const sql2 = `UPDATE users SET avatar = '${req.file.filename}' WHERE id = ${req.params.id}`
 
@@ -208,6 +208,8 @@ router.post(`/register`, (req, res) => {
             if (err) return res.send(err)
 
             res.send(results)
+
+            // mailVerify(user)
         })
     })
 })
@@ -234,7 +236,7 @@ router.post('/login', (req, res) => {
 // USER LOGIN END
 
 // VERIFY USER START
-router.get(`verify`, (req, res) => {
+router.get(`/verify`, (req, res) => {
     const sql = `UPDATE users SET verified = true WHERE username = ?`
     const data = req.query.username
 
@@ -245,6 +247,17 @@ router.get(`verify`, (req, res) => {
     })
 })
 // VERIFY USER END
+
+// READ ALL USER
+router.get(`/users`, (req, res) => {
+    const sql = `SELECT * FROM users`
+
+    conn.query(sql, (err, result) => {
+        if (err) return res.send(err)
+
+        res.send(result)
+    })
+})
 
 // READ USER START
 router.get(`/profile/:username`, (req, res) => {
