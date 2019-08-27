@@ -9,7 +9,7 @@ const conn = require('../connection/index.js')
 // CREATE BRANDS START
 router.post('/addbrand', (req, res) => {
    const sql = `SELECT brand_name FROM brands WHERE brand_name = '${req.body.brand_name}'`
-   const sql2 = `INSERT INTO brand SET ?`
+   const sql2 = `INSERT INTO brands SET ?`
    const data = req.body
 
    conn.query(sql, (err, result) => {
@@ -41,7 +41,7 @@ router.get('/brands', (req, res) => {
 // READ ALL BRANDS END
 
 // READ SINGLE BRAND BY ID START
-router.get(`/brand/:id`, (req, res) => {
+router.get(`/brands/:id`, (req, res) => {
    const sql = `SELECT * FROM brands
                 WHERE id = ?`
    const data = req.params.id
