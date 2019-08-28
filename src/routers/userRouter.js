@@ -5,9 +5,6 @@ const bcrypt = require('bcrypt')
 const path = require('path')
 const fs = require('fs')
 const multer = require('multer')
-const mailVerify = require('../email/nodemailer')
-
-
 
 // ------------------------------------
 // ------------IMAGE CONFIG------------
@@ -15,8 +12,8 @@ const mailVerify = require('../email/nodemailer')
 // ------------------------------------
 
 // __dirname: alamat folder file userRouter.js
-const rootdir = path.join(__dirname, '/../..')
-const photosdir = path.join(rootdir, '/upload/photos')
+const rootdir = path.join(__dirname, '/..')
+const photosdir = path.join(rootdir, '/upload/photos/users')
 
 const folder = multer.diskStorage(
     {
@@ -58,11 +55,11 @@ const upstore = multer(
 // ------------------------------------
 
 // UPLOAD AVATAR START
-router.post('/avatar', upstore.single('image'), (req, res) => {
-    const sql = `SELECT * FROM users WHERE username = ?`
+router.post('/avatar', upstore.single('avatar'), (req, res) => {
+    const sql = `SELECT * FROM users WHERE id = ?`
     const sql2 = `UPDATE users SET avatar = '${req.file.filename}'
-                    WHERE username = '${req.body.uname}'`
-    const data = req.body.uname
+                  WHERE id = '${req.body.id}'`
+    const data = req.body.id
 
     conn.query(sql, data, (err, result) => {
         if (err) return res.send(err)
@@ -75,7 +72,7 @@ router.post('/avatar', upstore.single('image'), (req, res) => {
             if (err) return res.send(err)
 
             res.send({
-                message: 'Upload berhasil',
+                message: 'Upload Success',
                 filename: req.file.filename
             })
         })
@@ -84,7 +81,7 @@ router.post('/avatar', upstore.single('image'), (req, res) => {
 // UPLOAD AVATAR END
 
 // UPDATE AVATAR START
-router.patch(`/updateavatar/:id`, upstore.single(`image`), (req, res) => {
+router.patch(`/updateavatar/:id`, upstore.single(`avatar`), (req, res) => {
     const sql = `SELECT avatar FROM users WHERE id = ${req.params.id}`
     const sql2 = `UPDATE users SET avatar = '${req.file.filename}' WHERE id = ${req.params.id}`
 
@@ -92,10 +89,10 @@ router.patch(`/updateavatar/:id`, upstore.single(`image`), (req, res) => {
         if (err) return res.send(err)
 
         const avatarName = result[0].avatar
-        const avatarPatch = photosdir + '/' + avatarName
+        const avatarPath = photosdir + '/' + avatarName
 
         if (result[0].avatar) {
-            fs.unlink(avatarPatch, (err) => {
+            fs.unlink(avatarPath, (err) => {
                 if (err) return res.send(err)
 
             })
@@ -130,8 +127,8 @@ router.get('/users/avatar/:imageName', (req, res) => {
 
 // DELETE IMAGE START
 router.delete('/users/avatar', (req, res) => {
-    const sql = `SELECT * FROM users WHERE username = '${req.body.uname}'`
-    const sql2 = `UPDATE users SET avatar = null WHERE username = '${req.body.uname}'`
+    const sql = `SELECT * FROM users WHERE username = '${req.body.username}'`
+    const sql2 = `UPDATE users SET avatar = null WHERE username = '${req.body.username}'`
 
     conn.query(sql, (err, result) => {
         if (err) return res.send(err)
@@ -248,7 +245,7 @@ router.get(`/verify`, (req, res) => {
 })
 // VERIFY USER END
 
-// READ ALL USER
+// READ ALL USER START
 router.get(`/users`, (req, res) => {
     const sql = `SELECT * FROM users`
 
@@ -258,63 +255,65 @@ router.get(`/users`, (req, res) => {
         res.send(result)
     })
 })
-
-// READ USER START
-router.get(`/profile/:username`, (req, res) => {
-    const sql = `SELECT * FROM users WHERE username = ?`
-    const data = req.params.username
-
-    conn.query(sql, data, (err, result) => {
-        if (err) return res.send(err)
-
-        const user = result[0]
-
-        if (!user) return res.send(`User not found`)
-
-        res.send(
-            {
-                username: user.username,
-                first_name: user.first_name,
-                last_name: user.last_name,
-                email: user.email,
-                phone_number: user.phone_number,
-                avatar: `localhost:2019/users/avatar/${user.avatar}`
-            }
-        )
-    })
-})
-// READ USER END
-
-// UPDATE USER START
-router.patch(`/profile/:username`, (req, res) => {
-
-    if (req.body.password) {
-        req.body.password = bcrypt.hashSync(req.body.password, 8)
-    }
-
-    const sql = `UPDATE users SET ? WHERE username = ?`
-    const data = [req.body, req.params.username]
-
-    const sql2 = `SELECT first_name, last_name, username, email, phone_number, password, verified FROM users WHERE username = ?`
-    const data2 = req.params.username
-
-    conn.query(sql, data, (err, result) => {
-        if (err) return res.send(err)
-
-        conn.query(sql2, data2, (err, result2) => {
-            if (err) return res.send(err)
-
-            const user = result2[0]
-            res.send(user)
-        })
-    })
-})
-// UPDATE USER END
+// READ ALL USER END
 
 // ------------------------------------
 // --------------USER------------------
 // ---------------END------------------
 // ------------------------------------
 
+// ------------------------------------
+// -------------PROFILE----------------
+// --------------START-----------------
+// ------------------------------------
+
+// READ PROFILE START
+router.get('/userprofile', (req, res) => {
+    const sql = `SELECT * FROM users`
+
+    conn.query(sql, (err, result) => {
+        if (err) return res.send(err)
+
+        res.send(result)
+    })
+})
+// READ ROFILE END
+
+// READ PROFILE BY ID START
+router.get('/userprofile/:id', (req, res) => {
+    const sql = `SELECT * FROM users where id = ?`
+    const data = req.params.id
+
+    conn.query(sql, data, (err, result) => {
+        if (err) return res.send(err)
+
+        res.send(result)
+    })
+})
+// READ PROFILE BY ID END
+
+// UPDATE USER PROFILE START
+router.patch('/editprofile/:id', (req, res) => {
+    const data = [req.body, req.params.id]
+    const sql = `UPDATE users SET ? WHERE id = ?`
+    const sql2 = `SELECT * FROM users WHERE id = ${req.params.id}`
+
+    conn.query(sql, data, (err, result) => {
+        if (err) res.send(err)
+
+        conn.query(sql2, (err, results) => {
+            if (err) res.send(err)
+
+            const user = results[0]
+            res.send(user)
+        })
+    })
+})
+// UPDATE USER PROFILE END
+
+// ------------------------------------
+// -------------PROFILE----------------
+// ---------------END------------------
+// ------------------------------------
 
 module.exports = router
