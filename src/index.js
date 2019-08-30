@@ -6,6 +6,7 @@ const userRouter = require('./routers/userRouter')
 const adminRouter = require('./routers/adminRouter')
 const productRouter = require('./routers/productRouter')
 const brandRouter = require('./routers/brandRouter')
+const cartRouter = require('./routers/cartRouter')
 
 const app = express()
 const port = portal
@@ -16,6 +17,7 @@ app.use(userRouter)
 app.use(adminRouter)
 app.use(productRouter)
 app.use(brandRouter)
+app.use(cartRouter)
 
 
 app.get('/', (req, res) => {
