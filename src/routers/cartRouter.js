@@ -84,6 +84,20 @@ router.delete('/carts/:cartid', (req, res) => {
 })
 // DELETE CART BY ID END
 
+
+// DELETE CART BY USER ID START
+router.delete(`/carts/:userid`, (req, res) => {
+   const sql = `DELETE FROM carts WHERE user_id = ?`
+   const data = req.params.userid
+
+   conn.query(sql, data, (req, res) => {
+      if (err) return res.send(err)
+
+      res.send(result)
+   })
+})
+// DELETE CART BY USER ID END
+
 // ------------------------------------
 // ---------------CART-----------------
 // ----------------END-----------------
