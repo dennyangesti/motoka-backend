@@ -31,15 +31,6 @@ router.post(`/registeradmin`, (req, res) => {
          return res.send(`Username already registered, please use different username`)
       }
 
-      // Check email already taken
-      let emailTaken = result.filter(admin => {
-         return admin.email === data.email
-      })
-
-      if (emailTaken.length === 1) {
-         return res.send(`Email already registered, please use different email`)
-      }
-
       conn.query(sql2, data, (err, results) => {
          if (err) return res.send(err)
 
